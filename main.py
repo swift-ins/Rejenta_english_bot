@@ -75,7 +75,7 @@ async def webhook() -> str:
 # Запуск вебхука
 
 if __name__ == '__main__':
-    WEBHOOK_URL = f"https://test-bot-klq6.onrender.com/{TOKEN}"
+    WEBHOOK_URL = f"https://rejenta-english-bot.onrender.com/{TOKEN}"
 
     async def setup():
         await application.bot.set_webhook(WEBHOOK_URL)
