@@ -13,12 +13,12 @@ TOKEN = os.getenv("TOKEN")
 app = Flask(__name__)
 application = Application.builder().token(TOKEN).build()
 
-# Обработка команды /start
+# Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "Привет! Отправь мне слово или фразу, и я:\n"
         "- Определю язык 🌍\n"
-        "- Переведу в нужную сторону 🔄\n" 
+        "- Переведу в нужную сторону 🔄\n"
         "- Произнесу его вслух 🎙️"
     )
 
@@ -40,7 +40,6 @@ async def translate_and_pronounce(update: Update, context: ContextTypes.DEFAULT_
             translation = GoogleTranslator(source='en', target='ru').translate(text)
             pronunciation_text = text
 
-        # Генерация голосового сообщения
         tts = gTTS(text=pronunciation_text, lang="en")
         filename = "pronounce.mp3"
         tts.save(filename)
@@ -60,20 +59,19 @@ async def translate_and_pronounce(update: Update, context: ContextTypes.DEFAULT_
     except Exception as e:
         await update.message.reply_text(f"⚠️ Ошибка при обработке: {e}")
 
-# Регистрируем хендлеры
+# Регистрируем обработчики
 application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, translate_and_pronounce))
 
-# Вебхук маршрут
+# Вебхук (синхронный для Flask)
 @app.route(f'/{TOKEN}', methods=['POST'])
-async def webhook() -> str:
+def webhook():
     if request.method == "POST":
-        await application.update_queue.put(Update.de_json(request.get_json(force=True), application.bot))
+        update = Update.de_json(request.get_json(force=True), application.bot)
+        asyncio.create_task(application.update_queue.put(update))
         return "ok"
 
-
-# Запуск вебхука
-
+# Установка вебхука
 if __name__ == '__main__':
     WEBHOOK_URL = f"https://rejenta-english-bot.onrender.com/{TOKEN}"
 
@@ -81,6 +79,5 @@ if __name__ == '__main__':
         await application.bot.set_webhook(WEBHOOK_URL)
         print("Вебхук установлен")
 
-    asyncio.run(setup())  # Устанавливаем вебхук
+    asyncio.run(setup())
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-
