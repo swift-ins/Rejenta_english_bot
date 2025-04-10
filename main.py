@@ -7,8 +7,9 @@ from deep_translator import GoogleTranslator
 from dotenv import load_dotenv
 import asyncio
 
-load_dotenv()
-TOKEN = os.getenv("TOKEN")
+#load_dotenv()
+#TOKEN = os.getenv("TOKEN")
+TOKEN = "7632010371:AAHGROZ3aL-eyjxXKwRtqsjrVdBR4vQmIDM"
 
 app = Flask(__name__)
 application = Application.builder().token(TOKEN).build()
