@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
@@ -7,9 +8,13 @@ from deep_translator import GoogleTranslator
 from dotenv import load_dotenv
 import asyncio
 
-#load_dotenv()
-#TOKEN = os.getenv("TOKEN")
-TOKEN = "7632010371:AAHGROZ3aL-eyjxXKwRtqsjrVdBR4vQmIDM"
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Загрузка токена
+load_dotenv()
+TOKEN = os.getenv("TOKEN")  # Используйте переменные окружения!
 
 app = Flask(__name__)
 application = Application.builder().token(TOKEN).build()
@@ -58,18 +63,26 @@ async def translate_and_pronounce(update: Update, context: ContextTypes.DEFAULT_
         os.remove(filename)
 
     except Exception as e:
+        logger.error(f"Ошибка при обработке: {e}")
         await update.message.reply_text(f"⚠️ Ошибка при обработке: {e}")
 
 # Регистрируем обработчики
 application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, translate_and_pronounce))
 
-# Вебхук (синхронный для Flask)
+import asyncio
+
 @app.route(f'/{TOKEN}', methods=['POST'])
 def webhook():
     if request.method == "POST":
         update = Update.de_json(request.get_json(force=True), application.bot)
-        asyncio.create_task(application.update_queue.put(update))
+        
+        # Создаём новый event loop и выполняем асинхронный код
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(application.update_queue.put(update))
+        loop.close()
+        
         return "ok"
 
 # Установка вебхука
@@ -78,7 +91,7 @@ if __name__ == '__main__':
 
     async def setup():
         await application.bot.set_webhook(WEBHOOK_URL)
-        print("Вебхук установлен")
+        logger.info("Вебхук установлен")
 
     asyncio.run(setup())
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000))) 
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
