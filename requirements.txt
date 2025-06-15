@@ -1,5 +1,5 @@
-Flask==2.3.3
-python-telegram-bot==20.7
-gTTS==2.5.1
-deep-translator==1.11.4
-python-dotenv==1.0.1
+Flask
+python-telegram-bot
+gTTS
+deep-translator
+python-dotenv
